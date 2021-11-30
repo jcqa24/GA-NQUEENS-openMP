@@ -69,7 +69,7 @@ void InitConf(Chromo *population, int N, int p)
 			}
 		}
 	}
-     #pragma omp barrier
+    
 }
 
 
@@ -294,6 +294,7 @@ void calFit(Chromo *population, int N, int p)
 {
     int errores;
     int k, i, j;
+    #pragma omp parallel for num_threads(4) private(i,j,errores)
     for (k = 0; k < p; k++)
     {
         errores = 0;
@@ -349,7 +350,7 @@ int main()
     int N;
     int p, np, prob; // size of population and size of parents
 
-    N = 8;                 // reinas
+    N = 10;                 // reinas
     p = 100;               //poplacion incial
     np = p / 2;            // numero de padres
     prob = 10;             //probabilidad de mutacion
