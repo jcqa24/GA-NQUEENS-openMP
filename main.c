@@ -6,50 +6,54 @@
 
 struct Chromosome
 {
-	int fitness;
-	int *config;
+    int fitness;
+    int *config;
 };
 typedef struct Chromosome Chromo;
 
 void ip(Chromo *population, int p, int N)
 {
-	for (int j = 0; j < p; j++)
-	{
-		printf("Gen: %d [ ", j);
-		for (int i = 0; i < N; i++)
-		{
-			printf(" %d ", population[j].config[i] + 1);
-		}
-		printf("] fitnes ==> %d \n", population[j].fitness);
-	}
+    for (int j = 0; j < p; j++)
+    {
+        printf("Gen: %d [ ", j);
+        for (int i = 0; i < N; i++)
+        {
+            printf(" %d ", population[j].config[i] + 1);
+        }
+        printf("] fitnes ==> %d \n", population[j].fitness);
+    }
 }
 
 void Insertion_sort(Chromo *population, int p)
 {
 
-	int i, j;
-	Chromo temp;
+    int i, j;
+    Chromo temp;
 
-	for (i = 1; i < p; i++)
-	{
-		temp = population[i];
-		for (j = i; j > 0 && population[j - 1].fitness > temp.fitness; j--)
-		{
-			population[j] = population[j - 1];
-		}
-		population[j] = temp;
-	}
+    for (i = 1; i < p; i++)
+    {
+        temp = population[i];
+        for (j = i; j > 0 && population[j - 1].fitness > temp.fitness; j--)
+        {
+            population[j] = population[j - 1];
+        }
+        population[j] = temp;
+    }
 }
+
 
 void InitConf(Chromo *population, int N, int p)
 {
 
 	int pos;
 	int i, j, k;
-    //#pragma omp parallel for shared(population,k,N,p) 
+
+
+
+    #pragma omp parallel for num_threads(4) private(pos,i,j)
 	for (k = 0; k < p; k++)
 	{
-		population[k].config = (int *)malloc(sizeof(int) * N);
+        population[k].config = (int *)malloc(sizeof(int) * N);
 		for (j = 0; j < N; j++)
 		{
 			population[k].config[j] = -1;
@@ -65,390 +69,391 @@ void InitConf(Chromo *population, int N, int p)
 			}
 		}
 	}
+     #pragma omp barrier
 }
+
+
 
 void shuffle(Chromo *population, int p, int N)
 {
-	int i, j;
-	Chromo temp;
-	temp.config = (int *)malloc(sizeof(int) * N);
-	int c = 0;					   //contador de cambios;
-	int nc = rand() % (p - 2) + 2; //numero de cambios
-	while (c <= nc)
-	{
+    int i, j;
+    Chromo temp;
+    temp.config = (int *)malloc(sizeof(int) * N);
+    int c = 0;                     //contador de cambios;
+    int nc = rand() % (p - 2) + 2; //numero de cambios
+    while (c <= nc)
+    {
 
-		i = rand() % (p);
-		j = rand() % (p);
-		if (j != i)
-		{
-			temp = population[i];
-			population[i] = population[j];
-			population[j] = temp;
-			c++;
-		}
-	}
+        i = rand() % (p);
+        j = rand() % (p);
+        if (j != i)
+        {
+            temp = population[i];
+            population[i] = population[j];
+            population[j] = temp;
+            c++;
+        }
+    }
 }
 
 //Partially Mapped Crossover
 void Crossover(Chromo *parents, Chromo *population, int N, int np)
 {
-	//hijos
-	int *c1 = (int *)malloc(sizeof(int) * N);
-	int *c2 = (int *)malloc(sizeof(int) * N);
-	//padres
-	int *p1, *p2;
-	int flag1;
-	int flag2;
-	int pos1, pos2;
-	int k = N / 3;
-	int posnp = np;
+    //hijos
+    int *c1 = (int *)malloc(sizeof(int) * N);
+    int *c2 = (int *)malloc(sizeof(int) * N);
+    //padres
+    int *p1, *p2;
+    int flag1;
+    int flag2;
+    int pos1, pos2;
+    int k = N / 3;
+    int posnp = np;
 
-	for (int n = 0; (n + 1) < np; n = n + 2)
-	{
+    for (int n = 0; (n + 1) < np; n = n + 2)
+    {
 
-		//inicializo los hijos
-		for (int m = 0; m < N; m++)
-		{
-			c1[m] = -1;
-			c2[m] = -1;
-		}
-		flag1 = 0;
-		flag2 = 0;
+        //inicializo los hijos
+        for (int m = 0; m < N; m++)
+        {
+            c1[m] = -1;
+            c2[m] = -1;
+        }
+        flag1 = 0;
+        flag2 = 0;
 
-		//inicializo los padres
+        //inicializo los padres
 
-		p1 = parents[n].config;
-		p2 = parents[n + 1].config;
+        p1 = parents[n].config;
+        p2 = parents[n + 1].config;
 
-		for (int a = k; a < (N - k); a++)
-		{
-			c1[a] = p2[a];
-			c2[a] = p1[a];
-		}
+        for (int a = k; a < (N - k); a++)
+        {
+            c1[a] = p2[a];
+            c2[a] = p1[a];
+        }
 
-		for (int a = 0; a < k; a++)
-		{
-			flag1 = 0;
-			flag2 = 0;
-			pos1 = p1[a];
-			pos2 = p2[a];
-			for (int b = k; b < (N - k); b++)
-			{
-				if (pos1 == c1[b])
-				{
-					flag1 = 1;
-				}
-				if (pos2 == c2[b])
-				{
-					flag2 = 1;
-				}
-			}
-			if (!flag1)
-			{
-				c1[a] = pos1;
-			}
-			if (!flag2)
-			{
-				c2[a] = pos2;
-			}
-		}
+        for (int a = 0; a < k; a++)
+        {
+            flag1 = 0;
+            flag2 = 0;
+            pos1 = p1[a];
+            pos2 = p2[a];
+            for (int b = k; b < (N - k); b++)
+            {
+                if (pos1 == c1[b])
+                {
+                    flag1 = 1;
+                }
+                if (pos2 == c2[b])
+                {
+                    flag2 = 1;
+                }
+            }
+            if (!flag1)
+            {
+                c1[a] = pos1;
+            }
+            if (!flag2)
+            {
+                c2[a] = pos2;
+            }
+        }
 
-		for (int a = (N - k); a < N; a++)
-		{
-			pos1 = p1[a];
-			pos2 = p2[a];
-			flag1 = 0;
-			flag2 = 0;
-			for (int b = k; b < (N - k); b++)
-			{
-				if (pos1 == c1[b])
-				{
-					flag1 = 1;
-				}
-				if (pos2 == c2[b])
-				{
-					flag2 = 1;
-				}
-			}
-			if (!flag1)
-			{
-				c1[a] = pos1;
-			}
-			if (!flag2)
-			{
-				c2[a] = pos2;
-			}
-		}
+        for (int a = (N - k); a < N; a++)
+        {
+            pos1 = p1[a];
+            pos2 = p2[a];
+            flag1 = 0;
+            flag2 = 0;
+            for (int b = k; b < (N - k); b++)
+            {
+                if (pos1 == c1[b])
+                {
+                    flag1 = 1;
+                }
+                if (pos2 == c2[b])
+                {
+                    flag2 = 1;
+                }
+            }
+            if (!flag1)
+            {
+                c1[a] = pos1;
+            }
+            if (!flag2)
+            {
+                c2[a] = pos2;
+            }
+        }
 
-		int count, co;
-		for (int a = 0; a < N; a++)
-		{
-			flag1 = 0;
-			count = 0;
-			co = 0;
-			while ((!flag1) && count < N)
-			{
-				if (a == c1[count])
-				{
-					flag1 = 1;
-				}
-				count++;
-			}
+        int count, co;
+        for (int a = 0; a < N; a++)
+        {
+            flag1 = 0;
+            count = 0;
+            co = 0;
+            while ((!flag1) && count < N)
+            {
+                if (a == c1[count])
+                {
+                    flag1 = 1;
+                }
+                count++;
+            }
 
-			if (!flag1)
-			{
-				while ((c1[co] != -1) && (co < N))
-				{
-					co = rand() % N;
-				}
-				c1[co] = a;
-			}
-			flag1 = 0;
-			count = 0;
-			co = 0;
-			while ((!flag1) && count < N)
-			{
-				if (a == c2[count])
-				{
-					flag1 = 1;
-				}
-				count++;
-			}
+            if (!flag1)
+            {
+                while ((c1[co] != -1) && (co < N))
+                {
+                    co = rand() % N;
+                }
+                c1[co] = a;
+            }
+            flag1 = 0;
+            count = 0;
+            co = 0;
+            while ((!flag1) && count < N)
+            {
+                if (a == c2[count])
+                {
+                    flag1 = 1;
+                }
+                count++;
+            }
 
-			if (!flag1)
-			{
-				while ((c2[co] != -1) && (co < N))
-				{
-					co = rand() % N;
-				}
-				c2[co] = a;
-			}
-		}
+            if (!flag1)
+            {
+                while ((c2[co] != -1) && (co < N))
+                {
+                    co = rand() % N;
+                }
+                c2[co] = a;
+            }
+        }
 
-		for (int i = 0; i < N; i++)
-		{
-			population[posnp].config[i] = c1[i];
-			population[posnp + 1].config[i] = c2[i];
-		}
+        for (int i = 0; i < N; i++)
+        {
+            population[posnp].config[i] = c1[i];
+            population[posnp + 1].config[i] = c2[i];
+        }
 
-		posnp = posnp + 2;
-	}
+        posnp = posnp + 2;
+    }
 }
 
 void selectChampionship(Chromo *parents, Chromo *population, int N, int p)
 {
 
-	int j, i, c = 0;
+    int j, i, c = 0;
 
-	shuffle(population, p, N); // check
+    shuffle(population, p, N); // check
 
-	for (i = 0; i < p; i = i + 2)
-	{
-		if (population[i].fitness <= population[i + 1].fitness)
-		{
-			//parents[c] = population[i];
-			for (j = 0; j < N; j++)
-			{
-				parents[c].config[j] = population[i].config[j];
-			}
-		}
-		else
-		{
-			//parents[c] = population[i + 1];
-			for (j = 0; j < N; j++)
-			{
-				parents[c].config[j] = population[i + 1].config[j];
-			}
-		}
-		c++;
-	}
+    for (i = 0; i < p; i = i + 2)
+    {
+        if (population[i].fitness <= population[i + 1].fitness)
+        {
+            //parents[c] = population[i];
+            for (j = 0; j < N; j++)
+            {
+                parents[c].config[j] = population[i].config[j];
+            }
+        }
+        else
+        {
+            //parents[c] = population[i + 1];
+            for (j = 0; j < N; j++)
+            {
+                parents[c].config[j] = population[i + 1].config[j];
+            }
+        }
+        c++;
+    }
 }
 
 void printConf(int *conf, int N)
 {
-	for (int i = 0; i < N; i++)
-	{
-		for (int j = 0; j < N; j++)
-		{
-			if (conf[i] == j)
-			{
-				printf(" %c ", 'X');
-			}
-			else
-			{
-				printf(" %c ", '-');
-			}
-		}
-		printf("\n");
-	}
+    for (int i = 0; i < N; i++)
+    {
+        for (int j = 0; j < N; j++)
+        {
+            if (conf[i] == j)
+            {
+                printf(" %c ", 'X');
+            }
+            else
+            {
+                printf(" %c ", '-');
+            }
+        }
+        printf("\n");
+    }
 }
 
 void calFit(Chromo *population, int N, int p)
 {
-	int errores;
-	int k, i, j;
-	for (k = 0; k < p; k++)
-	{
-		errores = 0;
-		for (i = 0; i < N; i++)
-		{
-			for (j = 0; j < N; j++)
-			{
-				if (i != j)
-				{
-					if ((population[k].config[i] - i) == (population[k].config[j] - j))
-					{
-						errores++;
-					}
-					if ((population[k].config[i] + i) == (population[k].config[j] + j))
-					{
-						errores++;
-					}
-				}
-			}
-		}
+    int errores;
+    int k, i, j;
+    for (k = 0; k < p; k++)
+    {
+        errores = 0;
+        for (i = 0; i < N; i++)
+        {
+            for (j = 0; j < N; j++)
+            {
+                if (i != j)
+                {
+                    if ((population[k].config[i] - i) == (population[k].config[j] - j))
+                    {
+                        errores++;
+                    }
+                    if ((population[k].config[i] + i) == (population[k].config[j] + j))
+                    {
+                        errores++;
+                    }
+                }
+            }
+        }
 
-		population[k].fitness = errores;
-	}
+        population[k].fitness = errores;
+    }
 }
 
 void mutation(Chromo *population, int prob, int N, int p)
 {
-	int aux, i, p1 = 0, p2 = 0;
-	for (i = 0; i < p; i++)
-	{
-		srand(time(NULL));
-		if (rand() % (101) <= prob)
-		{
-			do
-			{
-				p1 = rand() % (N + 1);
-				p2 = rand() % (N + 1);
-			} while (p1 == p2);
-			aux = population[i].config[p1];
-			population[i].config[p1] = population[i].config[p2];
-			population[i].config[p2] = aux;
-		}
-	}
+    int aux, i, p1 = 0, p2 = 0;
+    for (i = 0; i < p; i++)
+    {
+        srand(time(NULL));
+        if (rand() % (101) <= prob)
+        {
+            do
+            {
+                p1 = rand() % (N + 1);
+                p2 = rand() % (N + 1);
+            } while (p1 == p2);
+            aux = population[i].config[p1];
+            population[i].config[p1] = population[i].config[p2];
+            population[i].config[p2] = aux;
+        }
+    }
 }
 
 int main()
 {
-	srand(time(NULL));
-	
-    omp_set_num_threads(4); // numero de hilos
+    srand(time(NULL));
 
-	int i;
-	int N;
-	int p, np, prob; // size of population and size of parents
+    //omp_set_num_threads(4); // numero de hilos
 
-	N = 8;			   // reinas
-	p = 100;			   //poplacion incial
-	np = p / 2;		   // numero de padres
-	prob = 10;		   //probabilidad de mutacion
-	int numMaxGen = 10000; // Numero Maximo de Generaciones
-	int countGen = 0;  //Contador de Generaciones
+    int i;
+    int N;
+    int p, np, prob; // size of population and size of parents
 
-	Chromo Best;
-	Best.config = (int *)malloc(sizeof(int) * N);
-	Chromo *population = (Chromo *)malloc(sizeof(Chromo) * p);
-	Chromo *parents = (Chromo *)malloc(sizeof(Chromo) * np);
+    N = 8;                 // reinas
+    p = 100;               //poplacion incial
+    np = p / 2;            // numero de padres
+    prob = 10;             //probabilidad de mutacion
+    int numMaxGen = 10000; // Numero Maximo de Generaciones
+    int countGen = 0;      //Contador de Generaciones
 
-	clock_t start = clock();
+    Chromo Best;
+    Best.config = (int *)malloc(sizeof(int) * N);
+    Chromo *population = (Chromo *)malloc(sizeof(Chromo) * p);
+    Chromo *parents = (Chromo *)malloc(sizeof(Chromo) * np);
 
-	for (i = 0; i < p; i++)
-	{
-		population[i].config = (int *)malloc(sizeof(int) * N);
-	}
+    clock_t start = clock();
 
-	for (i = 0; i < np; i++)
-	{
-		parents[i].config = (int *)malloc(sizeof(int) * N);
-	}
+    for (i = 0; i < p; i++)
+    {
+        population[i].config = (int *)malloc(sizeof(int) * N);
+    }
 
-	printf("Agoritmo genetico para N reinias \n");
-	printf("Numero de Reinas -> %d\n", N);
-	printf("Poblacion inicial -> %d\n", p);
+    for (i = 0; i < np; i++)
+    {
+        parents[i].config = (int *)malloc(sizeof(int) * N);
+    }
 
-	//Generamos la poblacion incial
-	InitConf(population, N, p); //check
+    printf("Agoritmo genetico para N reinias \n");
+    printf("Numero de Reinas -> %d\n", N);
+    printf("Poblacion inicial -> %d\n", p);
 
-	//Calculamos el fit de la poblacion inicial
-	calFit(population, N, p); //check
+    //Generamos la poblacion incial
+    InitConf(population, N, p); //check
 
-	//ordenamos por mejor fit
-	Insertion_sort(population, p); //check
+    //Calculamos el fit de la poblacion inicial
+    calFit(population, N, p); //check
 
-	//Caso donde se encuentra un optimo en la primer generacion
-	if (population[0].fitness == 0)
-	{
-		printf("\n\n=============================================\n");
-		printf("La mejor solucion tiene un fit de %d \n", population[0].fitness);
-		printf("La mejor solucion es: [ ");
-		for (int i = 0; i < N; i++)
-		{
-			printf(" %d ", population[0].config[i] + 1);
-		}
-		printf("]\n");
-		printConf(population[0].config, N);
-		printf("\n===============================================\n");
-		return 0;
-	}
+    //ordenamos por mejor fit
+    Insertion_sort(population, p); //check
 
-	// En caso contrario se guarda el candidato mas optimo
-	for (i = 0; i < N; i++)
-	{
-		Best.config[i] = population[0].config[i];
-	}
-	Best.fitness = population[0].fitness;
+    //Caso donde se encuentra un optimo en la primer generacion
+    if (population[0].fitness == 0)
+    {
+        printf("\n\n=============================================\n");
+        printf("La mejor solucion tiene un fit de %d \n", population[0].fitness);
+        printf("La mejor solucion es: [ ");
+        for (int i = 0; i < N; i++)
+        {
+            printf(" %d ", population[0].config[i] + 1);
+        }
+        printf("]\n");
+        printConf(population[0].config, N);
+        printf("\n===============================================\n");
+        return 0;
+    }
 
-	do
-	{
+    // En caso contrario se guarda el candidato mas optimo
+    for (i = 0; i < N; i++)
+    {
+        Best.config[i] = population[0].config[i];
+    }
+    Best.fitness = population[0].fitness;
 
-		//Seleccion de padres
-		selectChampionship(parents, population, N, p); //check
+    do
+    {
 
-		//Cruza
-		Crossover(parents, population, N, np); //check
+        //Seleccion de padres
+        selectChampionship(parents, population, N, p); //check
 
-		//Mutacion
-		mutation(population, prob, N, np);
+        //Cruza
+        Crossover(parents, population, N, np); //check
 
-		//Calculo del Fit
-		calFit(population, N, p);
+        //Mutacion
+        mutation(population, prob, N, np);
 
-		//Ordenamos
-		Insertion_sort(population, p);
+        //Calculo del Fit
+        calFit(population, N, p);
 
-		//Comprobamos si hay un mejor candidato
+        //Ordenamos
+        Insertion_sort(population, p);
 
-		if (population[0].fitness <= Best.fitness)
-		{
-			for (i = 0; i < N; i++)
-			{
-				Best.config[i] = population[0].config[i];
-			}
-			Best.fitness = population[0].fitness;
-		}
+        //Comprobamos si hay un mejor candidato
 
-		countGen++;
-		
+        if (population[0].fitness <= Best.fitness)
+        {
+            for (i = 0; i < N; i++)
+            {
+                Best.config[i] = population[0].config[i];
+            }
+            Best.fitness = population[0].fitness;
+        }
 
-	} while ((Best.fitness != 0) && (countGen < numMaxGen));
+        countGen++;
 
-	printf("\n\n=============================================\n");
-	printf("La mejor solucion tiene un fit de %d \n", Best.fitness);
-	printf("La mejor solucion es: [ ");
-	for (int i = 0; i < N; i++)
-	{
-		printf(" %d ", Best.config[i] + 1);
-	}
-	printf("]\n");
-	printConf(Best.config, N);
-	printf("\n===============================================\n");
+    } while ((Best.fitness != 0) && (countGen < numMaxGen));
 
+    printf("\n\n=============================================\n");
+    printf("La mejor solucion tiene un fit de %d \n", Best.fitness);
+    printf("La mejor solucion es: [ ");
+    for (int i = 0; i < N; i++)
+    {
+        printf(" %d ", Best.config[i] + 1);
+    }
+    printf("]\n");
+    printConf(Best.config, N);
+    printf("\n===============================================\n");
 
-	printf("Tiempo transcurrido: %2.10f\n", ((double)clock() - start) / CLOCKS_PER_SEC);
+    printf("Tiempo transcurrido: %2.10f\n", ((double)clock() - start) / CLOCKS_PER_SEC);
 
-	return 0;
+    return 0;
 }
