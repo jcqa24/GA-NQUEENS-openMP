@@ -323,6 +323,7 @@ void calFit(Chromo *population, int N, int p)
 void mutation(Chromo *population, int prob, int N, int p)
 {
     int aux, i, p1 = 0, p2 = 0;
+    #pragma omp parallel for num_threads(4) private(aux,p1,p2)
     for (i = 0; i < p; i++)
     {
         srand(time(NULL));
