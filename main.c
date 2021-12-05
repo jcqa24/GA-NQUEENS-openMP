@@ -90,6 +90,22 @@ void shuffle(Chromo *population, int p, int N)
     }
 }
 
+int BuscaMin(Chromo *population, int p)
+{
+    int i, pos = 0;
+
+    for (i = 1; i < p; i++)
+    {
+
+        if (population[i].fitness < population[pos].fitness)
+        {
+            pos = i;
+        }
+    }
+
+    return pos;
+}
+
 //Partially Mapped Crossover
 void Crossover(Chromo *parents, Chromo *population, int N, int np)
 {
@@ -241,7 +257,7 @@ void selectChampionship(Chromo *parents, Chromo *population, int N, int p)
 
     int j, i, c = 0;
 
-    shuffle(population, p, N); // check
+    //shuffle(population, p, N); // check
 
     for (i = 0; i < p; i = i + 2)
     {
@@ -378,6 +394,7 @@ void confFinal(Chromo Best, int N, clock_t start)
 void algoritmoGenetico(int N, int p, int np, Chromo Best, int prob, int numMaxGen, clock_t start)
 {
 
+    int posmin;
     int countGen = 0; //Contador de Generaciones
     Chromo *parents = (Chromo *)malloc(sizeof(Chromo) * np);
     Chromo *population = (Chromo *)malloc(sizeof(Chromo) * p);
@@ -389,12 +406,11 @@ void algoritmoGenetico(int N, int p, int np, Chromo Best, int prob, int numMaxGe
     //Calculamos el fit de la poblacion inicial
     calFit(population, N, p); //check
 
-    //ordenamos por mejor fit
-    Insertion_sort(population, p); //check
+    posmin = BuscaMin(population, p);
 
     //Caso donde se encuentra un optimo en la primer generacion
-    if (population[0].fitness == 0)
-        confFinal(population[0], N, start);
+    if (population[posmin].fitness == 0)
+        confFinal(population[posmin], N, start);
     else
     {
         // En caso contrario se guarda el candidato mas optimo
@@ -402,7 +418,6 @@ void algoritmoGenetico(int N, int p, int np, Chromo Best, int prob, int numMaxGe
 
         do
         {
-
             //Seleccion de padres
             selectChampionship(parents, population, N, p); //check
 
@@ -416,12 +431,14 @@ void algoritmoGenetico(int N, int p, int np, Chromo Best, int prob, int numMaxGe
             calFit(population, N, p);
 
             //Ordenamos
-            Insertion_sort(population, p);
+            //Insertion_sort(population, p);
+
+            posmin = BuscaMin(population, p);
 
             //Comprobamos si hay un mejor candidato
 
-            if (population[0].fitness <= Best.fitness)
-                copyBest(Best, population[0], N);
+            if (population[posmin].fitness <= Best.fitness)
+                copyBest(Best, population[posmin], N);
 
             countGen++;
 
@@ -442,15 +459,13 @@ int main()
     Chromo Best;
     Best.config = (int *)malloc(sizeof(int) * N);
 
-    
-
     printf("Agoritmo genetico para N reinias \n");
     printf("Numero de Reinas -> %d\n", N);
     printf("Poblacion inicial -> %d\n", p);
 
     clock_t start = clock();
 
-    algoritmoGenetico(N,p, np, Best, prob, numMaxGen,start);
+    algoritmoGenetico(N, p, np, Best, prob, numMaxGen, start);
 
     confFinal(Best, N, start);
 
