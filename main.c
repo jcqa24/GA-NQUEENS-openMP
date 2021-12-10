@@ -287,24 +287,24 @@ void printConf(int *conf, int N)
     {
         for (int j = 0; j < N; j++)
         {
-            if (conf[i] == j)
+            if (conf[j] == i)
             {
                 printf(" %c ", 'X');
             }
             else
             {
-                printf(" %c ", '-');
+                printf(" %c ", '_');
             }
         }
         printf("\n");
     }
 }
-
 void calFit(Chromo *population, int N, int p)
 {
     int errores;
     int k, i, j;
-#pragma omp parallel for num_threads(4) private(i, j, errores)
+    int dx, dy;
+
     for (k = 0; k < p; k++)
     {
         errores = 0;
@@ -314,11 +314,9 @@ void calFit(Chromo *population, int N, int p)
             {
                 if (i != j)
                 {
-                    if ((population[k].config[i] - i) == (population[k].config[j] - j))
-                    {
-                        errores++;
-                    }
-                    if ((population[k].config[i] + i) == (population[k].config[j] + j))
+                    dx = i-j;
+                    dy = population[k].config[j] -population[k].config[i];
+                    if (abs(dx) == abs(dy))
                     {
                         errores++;
                     }
@@ -450,7 +448,7 @@ int main()
 {
     srand(time(NULL));
 
-    int N = 10;            // reinas
+    int N = 15;            // reinas
     int p = 100;           //poplacion incial
     int np = p / 2;        // numero de padres
     int prob = 10;         //probabilidad de mutacion

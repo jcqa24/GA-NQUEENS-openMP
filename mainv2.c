@@ -41,14 +41,13 @@ void Insertion_sort(Chromo *population, int p)
     }
 }
 
-void InitConf(Chromo *population, int N, int p)
+void InitConf(Chromo *population, int N, int inicio, int fin)
 {
 
     int pos;
     int i, j, k;
 
-#pragma omp parallel for num_threads(4) private(pos, i, j)
-    for (k = 0; k < p; k++)
+    for (k = inicio; k < fin; k++)
     {
         population[k].config = (int *)malloc(sizeof(int) * N);
         for (j = 0; j < N; j++)
@@ -90,11 +89,11 @@ void shuffle(Chromo *population, int p, int N)
     }
 }
 
-int BuscaMin(Chromo *population, int p)
+int BuscaMin(Chromo *population, int inicio, int fin)
 {
-    int i, pos = 0;
+    int i, pos = inicio;
 
-    for (i = 1; i < p; i++)
+    for (i = inicio+1; i < fin; i++)
     {
 
         if (population[i].fitness < population[pos].fitness)
@@ -287,25 +286,24 @@ void printConf(int *conf, int N)
     {
         for (int j = 0; j < N; j++)
         {
-            if (conf[i] == j)
+            if (conf[j] == i)
             {
                 printf(" %c ", 'X');
             }
             else
             {
-                printf(" %c ", '-');
+                printf(" %c ", '_');
             }
         }
         printf("\n");
     }
 }
 
-void calFit(Chromo *population, int N, int p)
+void calFit(Chromo *population, int N, int inicio, int fin)
 {
     int errores;
     int k, i, j;
-#pragma omp parallel for num_threads(4) private(i, j, errores)
-    for (k = 0; k < p; k++)
+    for (k = inicio; k < fin; k++)
     {
         errores = 0;
         for (i = 0; i < N; i++)
@@ -330,11 +328,10 @@ void calFit(Chromo *population, int N, int p)
     }
 }
 
-void mutation(Chromo *population, int prob, int N, int p)
+void mutation(Chromo *population, int prob, int N, int inicio, int fin)
 {
     int aux, i, p1 = 0, p2 = 0;
-#pragma omp parallel for num_threads(4) private(aux, p1, p2)
-    for (i = 0; i < p; i++)
+    for (i = inicio; i < fin; i++)
     {
         srand(time(NULL));
         if (rand() % (101) <= prob)
@@ -391,66 +388,115 @@ void confFinal(Chromo Best, int N, clock_t start)
     printf("Tiempo transcurrido: %2.10f\n", ((double)clock() - start) / CLOCKS_PER_SEC);
 }
 
-void algoritmoGenetico(int N, int p, int np, Chromo Best, int prob, int numMaxGen, clock_t start)
+int algoritmoGenetico(int N, int p, int np, Chromo Best, int prob, int numMaxGen, clock_t start)
 {
 
-    int posmin;
+    int numthreads = 5;
+    omp_set_num_threads(numthreads);
+    int posminglobal, posminlocal;
     int countGen = 0; //Contador de Generaciones
     Chromo *parents = (Chromo *)malloc(sizeof(Chromo) * np);
     Chromo *population = (Chromo *)malloc(sizeof(Chromo) * p);
     reservaMemoria(population, parents, p, np, N);
 
-    //Generamos la poblacion incial
-    InitConf(population, N, p); //check
+    int inicio, fin, idthread;
 
-    //Calculamos el fit de la poblacion inicial
-    calFit(population, N, p); //check
-
-    posmin = BuscaMin(population, p);
-
-    //Caso donde se encuentra un optimo en la primer generacion
-    if (population[posmin].fitness == 0)
-        confFinal(population[posmin], N, start);
-    else
+    int Bestfitness = 100000;
+// agregar share
+#pragma omp parallel private(idthread, inicio, fin, posminlocal) shared (population,countGen,Bestfitness,Best,parents)
     {
-        // En caso contrario se guarda el candidato mas optimo
-        copyBest(Best, population[0], N);
+        idthread = omp_get_thread_num();
+        inicio = (idthread * (p / numthreads));
+        fin = inicio + (p / numthreads);
+        //printf("Incio: %d Fin: %d\n",inicio,fin);
 
-        do
+        //Generamos la poblacion incial
+        InitConf(population, N, inicio, fin); //check
+
+        //Calculamos el fit de la poblacion inicial
+        calFit(population, N, inicio, fin); //check
+
+        posminlocal = BuscaMin(population, inicio,fin);
+        printf("Posicion local minima %d: \n", posminlocal);
+        //Insertion_sort(population, p);
+        //if (idthread == 0)
+        //{
+        #pragma omp critical
+        {
+            if (population[posminlocal].fitness < Bestfitness)
+            {
+                copyBest(Best, population[posminlocal], N);
+                Bestfitness = population[posminlocal].fitness;
+            }
+        }
+    //Caso donde se encuentra un optimo en la primer generacion
+
+    // En caso contrario se guarda el candidato mas optimo
+
+    //  }
+
+    
+
+    while ((Bestfitness > 0) && (countGen < numMaxGen))
+    {
+
+        printf("Mejor fittness global: %d y numero de generaciones %d\n",Bestfitness, countGen);
+        if (idthread == 0)
         {
             //Seleccion de padres
+            printf("Padres");
             selectChampionship(parents, population, N, p); //check
 
             //Cruza
+            printf("Cruza");
             Crossover(parents, population, N, np); //check
+        }
 
-            //Mutacion
-            mutation(population, prob, N, np);
+        printf("\tBarera %d ",idthread);
+#pragma omp barrier
+        //Mutacion
+        printf("Mutacion");
+        mutation(population, prob, N, inicio, fin);
 
-            //Calculo del Fit
-            calFit(population, N, p);
+        //Calculo del Fit
+        printf("Calfit");
+        calFit(population, N, inicio, fin);
 
-            //Ordenamos
-            //Insertion_sort(population, p);
+        //Ordenamos
+        //Insertion_sort(population, p);
+        printf("Buscamin");
+        posminlocal = BuscaMin(population, inicio,fin);
 
-            posmin = BuscaMin(population, p);
+        printf("Critical");
+#pragma omp critical 
+{
+        if (population[posminlocal].fitness < Bestfitness)
+        {
+            copyBest(Best, population[posminlocal], N);
+            Bestfitness = population[posminlocal].fitness;
+        }
+    }   
 
-            //Comprobamos si hay un mejor candidato
 
-            if (population[posmin].fitness <= Best.fitness)
-                copyBest(Best, population[posmin], N);
+    printf("Contador");
 
-            countGen++;
+    if (idthread == 0)
+    {
 
-        } while ((Best.fitness != 0) && (countGen < numMaxGen));
+        countGen++;
     }
+
+#pragma omp barrier
+}
+}
+return countGen;
 }
 
 int main()
 {
     srand(time(NULL));
 
-    int N = 10;            // reinas
+    int N = 10;             // reinas
     int p = 100;           //poplacion incial
     int np = p / 2;        // numero de padres
     int prob = 10;         //probabilidad de mutacion
