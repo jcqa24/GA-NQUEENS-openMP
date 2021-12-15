@@ -349,14 +349,14 @@ void mutation(Chromo *population, int prob, int N, int p)
     }
 }
 
-void copyBest(Chromo Best, Chromo local, int N)
+void copyBest(Chromo *Best, Chromo local, int N)
 {
     int i;
     for (i = 0; i < N; i++)
     {
-        Best.config[i] = local.config[i];
+        Best->config[i] = local.config[i];
     }
-    Best.fitness = local.fitness;
+    Best->fitness = local.fitness;
 }
 
 void reservaMemoria(Chromo *population, Chromo *parents, int p, int np, int N)
@@ -389,7 +389,7 @@ void confFinal(Chromo Best, int N, clock_t start)
     printf("Tiempo transcurrido: %2.10f\n", ((double)clock() - start) / CLOCKS_PER_SEC);
 }
 
-void algoritmoGenetico(int N, int p, int np, Chromo Best, int prob, int numMaxGen, clock_t start)
+void algoritmoGenetico(int N, int p, int np, Chromo *Best, int prob, int numMaxGen, clock_t start)
 {
 
     int posmin;
@@ -435,12 +435,12 @@ void algoritmoGenetico(int N, int p, int np, Chromo Best, int prob, int numMaxGe
 
             //Comprobamos si hay un mejor candidato
 
-            if (population[posmin].fitness <= Best.fitness)
+            if (population[posmin].fitness <= Best->fitness)
                 copyBest(Best, population[posmin], N);
 
             countGen++;
 
-        } while ((Best.fitness != 0) && (countGen < numMaxGen));
+        } while ((Best->fitness != 0) && (countGen < numMaxGen));
     }
 }
 
@@ -448,13 +448,14 @@ int main()
 {
     srand(time(NULL));
 
-    int N = 15;            // reinas
+    int N = 8;            // reinas
     int p = 100;           //poplacion incial
     int np = p / 2;        // numero de padres
     int prob = 10;         //probabilidad de mutacion
     int numMaxGen = 10000; // Numero Maximo de Generaciones
 
     Chromo Best;
+    Best.fitness = 0;
     Best.config = (int *)malloc(sizeof(int) * N);
 
     printf("Agoritmo genetico para N reinias \n");
@@ -463,7 +464,7 @@ int main()
 
     clock_t start = clock();
 
-    algoritmoGenetico(N, p, np, Best, prob, numMaxGen, start);
+    algoritmoGenetico(N, p, np, &Best, prob, numMaxGen, start);
 
     confFinal(Best, N, start);
 
