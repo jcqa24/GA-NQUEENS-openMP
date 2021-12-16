@@ -1,3 +1,0 @@
-clear
-gcc mainv2.c -o mainv2.out -fopenmp 
-./mainv2.out

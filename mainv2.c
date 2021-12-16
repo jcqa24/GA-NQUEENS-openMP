@@ -72,8 +72,8 @@ void shuffle(Chromo *population, int p, int N)
     int i, j;
     Chromo temp;
     temp.config = (int *)malloc(sizeof(int) * N);
-    int c = 0;                     //contador de cambios;
-    int nc = rand() % (p - 2) + 2; //numero de cambios
+    int c = 0;                     // contador de cambios;
+    int nc = rand() % (p - 2) + 2; // numero de cambios
     while (c <= nc)
     {
 
@@ -114,7 +114,7 @@ void inicializaCruzaHijos(int *c1, int *c2, int N)
     }
 }
 
-void inicializaCruzaPadres(int *p1, int *p2, int *ind1, int *ind2, int N)
+void cruzaInicializaPadres(int *p1, int *p2, int *ind1, int *ind2, int N)
 {
     for (int m = 0; m < N; m++)
     {
@@ -123,103 +123,80 @@ void inicializaCruzaPadres(int *p1, int *p2, int *ind1, int *ind2, int N)
     }
 }
 
-
-void cruzaCopiaMedio(int *c1,int *c2,int *p1,int *p2, int inicio,int fin){
-            for (int a = inicio; a < fin; a++)
-        {
-            c1[a] = p2[a];
-            c2[a] = p1[a];
-        }
+void cruzaCopiaMedio(int *c1, int *c2, int *p1, int *p2, int inicio, int fin)
+{
+    for (int a = inicio; a < fin; a++)
+    {
+        c1[a] = p2[a];
+        c2[a] = p1[a];
+    }
 }
 
-
-//Partially Mapped Crossover
-void Crossover(Chromo *parents, Chromo *population, int N, int np)
+void cruzaCopiaExtremo(int *c1, int *c2, int *p1, int *p2, int inicio, int fin, int N, int inimedio, int finmedio)
 {
-
-    printf("iniciando cruce\n");
-    //hijos
-    int *c1 = (int *)malloc(sizeof(int) * N);
-    int *c2 = (int *)malloc(sizeof(int) * N);
-    //padres
-    int *p1 = (int *)malloc(sizeof(int) * N);
-    int *p2 = (int *)malloc(sizeof(int) * N);
     int flag1;
     int flag2;
     int pos1, pos2;
-    int k = N / 3;
-    int posnp = np;
-
-    for (int n = 0; (n + 1) < np; n = n + 2)
+    for (int a = inicio; a < fin; a++)
     {
-
-
         flag1 = 0;
         flag2 = 0;
+        pos1 = p1[a];
+        pos2 = p2[a];
+        for (int b = inimedio; b < finmedio; b++)
+        {
+            if (pos1 == c1[b])
+            {
+                flag1 = 1;
+            }
+            if (pos2 == c2[b])
+            {
+                flag2 = 1;
+            }
+        }
+        if (!flag1)
+        {
+            c1[a] = pos1;
+        }
+        if (!flag2)
+        {
+            c2[a] = pos2;
+        }
+    }
+}
 
-        printf("incia hijos\n");
+// Partially Mapped Crossover
+void Crossover(Chromo *parents, Chromo *population, int N, int inicio,int fin)
+{
+
+
+    // hijos
+    int *c1 = (int *)malloc(sizeof(int) * N);
+    int *c2 = (int *)malloc(sizeof(int) * N);
+    // padres
+    int *p1 = (int *)malloc(sizeof(int) * N);
+    int *p2 = (int *)malloc(sizeof(int) * N);
+    int flag1;
+   
+    int k = N / 3;
+    int posnp = fin;
+
+    for (int n = inicio; (n + 1) < fin; n = n + 2)
+    {
+
+        flag1 = 0;
+        
+
         inicializaCruzaHijos(c1, c2, N);
 
-        //inicializo los padres
-        printf("incia padres\n");
-        inicializaCruzaPadres(p1,p2, parents[n].config, parents[n + 1].config,N);
-        cruzaCopiaMedio(c1,c2,p1,p2,k,(N-k));
+        // inicializo los padres
+        cruzaInicializaPadres(p1, p2, parents[n].config, parents[n + 1].config, N);
 
+        cruzaCopiaMedio(c1, c2, p1, p2, k, (N - k));
 
+        cruzaCopiaExtremo(c1, c2, p1, p2, 0, k, N, k, (N - k));
 
-        for (int a = 0; a < k; a++)
-        {
-            flag1 = 0;
-            flag2 = 0;
-            pos1 = p1[a];
-            pos2 = p2[a];
-            for (int b = k; b < (N - k); b++)
-            {
-                if (pos1 == c1[b])
-                {
-                    flag1 = 1;
-                }
-                if (pos2 == c2[b])
-                {
-                    flag2 = 1;
-                }
-            }
-            if (!flag1)
-            {
-                c1[a] = pos1;
-            }
-            if (!flag2)
-            {
-                c2[a] = pos2;
-            }
-        }
-
-        for (int a = (N - k); a < N; a++)
-        {
-            pos1 = p1[a];
-            pos2 = p2[a];
-            flag1 = 0;
-            flag2 = 0;
-            for (int b = k; b < (N - k); b++)
-            {
-                if (pos1 == c1[b])
-                {
-                    flag1 = 1;
-                }
-                if (pos2 == c2[b])
-                {
-                    flag2 = 1;
-                }
-            }
-            if (!flag1)
-            {
-                c1[a] = pos1;
-            }
-            if (!flag2)
-            {
-                c2[a] = pos2;
-            }
-        }
+        cruzaCopiaExtremo(c1, c2, p1, p2, (N - k), N, N, k, (N - k));
 
         int count, co;
         for (int a = 0; a < N; a++)
@@ -240,7 +217,7 @@ void Crossover(Chromo *parents, Chromo *population, int N, int np)
             {
                 while ((c1[co] != -1) && (co < N))
                 {
-                    co = rand() % N;
+                    co++;
                 }
                 c1[co] = a;
             }
@@ -260,12 +237,12 @@ void Crossover(Chromo *parents, Chromo *population, int N, int np)
             {
                 while ((c2[co] != -1) && (co < N))
                 {
-                    co = rand() % N;
+                    co++;
                 }
                 c2[co] = a;
             }
         }
-
+  
         for (int i = 0; i < N; i++)
         {
             population[posnp].config[i] = c1[i];
@@ -274,7 +251,6 @@ void Crossover(Chromo *parents, Chromo *population, int N, int np)
 
         posnp = posnp + 2;
     }
-    printf("saliendo cruce\n");
 }
 
 void selectChampionship(Chromo *parents, Chromo *population, int N, int p)
@@ -282,13 +258,13 @@ void selectChampionship(Chromo *parents, Chromo *population, int N, int p)
 
     int j, i, c = 0;
 
-    //shuffle(population, p, N); // check
+    // shuffle(population, p, N); // check
 
     for (i = 0; i < p; i = i + 2)
     {
         if (population[i].fitness <= population[i + 1].fitness)
         {
-            //parents[c] = population[i];
+            // parents[c] = population[i];
             for (j = 0; j < N; j++)
             {
                 parents[c].config[j] = population[i].config[j];
@@ -296,7 +272,7 @@ void selectChampionship(Chromo *parents, Chromo *population, int N, int p)
         }
         else
         {
-            //parents[c] = population[i + 1];
+            // parents[c] = population[i + 1];
             for (j = 0; j < N; j++)
             {
                 parents[c].config[j] = population[i + 1].config[j];
@@ -382,8 +358,7 @@ void copyBest(Chromo *Best, Chromo local, int N)
         Best->config[i] = local.config[i];
     }
     Best->fitness = local.fitness;
-} 
-
+}
 
 void reservaMemoria(Chromo *population, Chromo *parents, int p, int np, int N)
 {
@@ -420,8 +395,8 @@ int algoritmoGenetico(int N, int p, int np, Chromo *Best, int prob, int numMaxGe
 
     int numthreads = 5;
     omp_set_num_threads(numthreads);
-    int posminglobal, posminlocal;
-    int countGen = 0; //Contador de Generaciones
+    int posminlocal;
+    int countGen = 0; // Contador de Generaciones
     Chromo *parents = (Chromo *)malloc(sizeof(Chromo) * np);
     Chromo *population = (Chromo *)malloc(sizeof(Chromo) * p);
     reservaMemoria(population, parents, p, np, N);
@@ -435,18 +410,18 @@ int algoritmoGenetico(int N, int p, int np, Chromo *Best, int prob, int numMaxGe
         idthread = omp_get_thread_num();
         inicio = (idthread * (p / numthreads));
         fin = inicio + (p / numthreads);
-        //printf("Incio: %d Fin: %d\n",inicio,fin);
+        // printf("Incio: %d Fin: %d\n",inicio,fin);
 
-        //Generamos la poblacion incial
-        InitConf(population, N, inicio, fin); //check
+        // Generamos la poblacion incial
+        InitConf(population, N, inicio, fin); // check
 
-        //Calculamos el fit de la poblacion inicial
-        calFit(population, N, inicio, fin); //check
+        // Calculamos el fit de la poblacion inicial
+        calFit(population, N, inicio, fin); // check
 
         posminlocal = BuscaMin(population, inicio, fin);
-        printf("Posicion local minima %d: \n", posminlocal);
-//Insertion_sort(population, p);
-//if (idthread == 0)
+
+// Insertion_sort(population, p);
+// if (idthread == 0)
 //{
 #pragma omp critical
         {
@@ -456,7 +431,7 @@ int algoritmoGenetico(int N, int p, int np, Chromo *Best, int prob, int numMaxGe
                 Bestfitness = population[posminlocal].fitness;
             }
         }
-        //Caso donde se encuentra un optimo en la primer generacion
+        // Caso donde se encuentra un optimo en la primer generacion
 
         // En caso contrario se guarda el candidato mas optimo
 
@@ -465,34 +440,26 @@ int algoritmoGenetico(int N, int p, int np, Chromo *Best, int prob, int numMaxGe
         while ((Bestfitness > 0) && (countGen < numMaxGen))
         {
 
-            printf("Mejor fittness global: %d y numero de generaciones %d\n", Bestfitness, countGen);
             if (idthread == 0)
             {
-                //Seleccion de padres
-                printf("Padres\n");
-                selectChampionship(parents, population, N, p); //check
-
-                //Cruza
-                printf("Cruza\n");
-                Crossover(parents, population, N, np); //check
+                // Seleccion de padres
+                selectChampionship(parents, population, N, p); // check
+                // Cruza
+                Crossover(parents, population, N,0 ,np); // check
             }
 
-            printf("\tBarera %d \n", idthread);
 #pragma omp barrier
-            //Mutacion
-            printf("Mutacion\n");
+            // Mutacion
+
             mutation(population, prob, N, inicio, fin);
 
-            //Calculo del Fit
-            printf("Calfit");
+            // Calculo del Fit
             calFit(population, N, inicio, fin);
 
-            //Ordenamos
-            //Insertion_sort(population, p);
-            printf("Buscamin\n");
+            // Ordenamos
+            // Insertion_sort(population, p);
             posminlocal = BuscaMin(population, inicio, fin);
 
-            printf("Critical\n");
 #pragma omp critical
             {
                 if (population[posminlocal].fitness < Bestfitness)
@@ -501,8 +468,6 @@ int algoritmoGenetico(int N, int p, int np, Chromo *Best, int prob, int numMaxGe
                     Bestfitness = population[posminlocal].fitness;
                 }
             }
-
-            printf("Contador\n");
 
             if (idthread == 0)
             {
@@ -520,10 +485,10 @@ int main()
 {
     srand(time(NULL));
 
-    int N = 10;            // reinas
-    int p = 100;           //poplacion incial
+    int N = 8;             // reinas
+    int p = 10;            // poplacion incial
     int np = p / 2;        // numero de padres
-    int prob = 10;         //probabilidad de mutacion
+    int prob = 10;         // probabilidad de mutacion
     int numMaxGen = 10000; // Numero Maximo de Generaciones
 
     Chromo Best;
