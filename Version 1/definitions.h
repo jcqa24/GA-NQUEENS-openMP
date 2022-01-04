@@ -21,6 +21,6 @@ void mutation(Chromo *, int, int, int);
 void copyBest(Chromo *, Chromo, int);
 void reservaMemoria(Chromo *, Chromo *, int, int, int);
 void confFinal(Chromo, int, clock_t);
-void algoritmoGenetico(int, int, int, Chromo *, int, int, clock_t);
+int algoritmoGenetico(int, int, int, Chromo *, int, int, clock_t);
 
 #endif // DEFINITIONS_H_
