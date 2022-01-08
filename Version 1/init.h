@@ -1,11 +1,12 @@
-void InitConf(Chromo *population, int N, int p)
+void InitConf(Chromo *population, int N, int inicio, int fin)
 {
 
     int pos;
     int i, j, k;
 
-#pragma omp parallel for num_threads(4) private(pos, i, j)
-    for (k = 0; k < p; k++)
+    #pragma omp parallel for num_threads(4) private(pos, i, j) shared(k)
+
+    for (k = inicio; k < fin; k++)
     {
         population[k].config = (int *)malloc(sizeof(int) * N);
         for (j = 0; j < N; j++)

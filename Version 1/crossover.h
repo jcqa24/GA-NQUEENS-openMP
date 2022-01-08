@@ -1,93 +1,95 @@
-//Partially Mapped Crossover
-void Crossover(Chromo *parents, Chromo *population, int N, int np)
+void inicializaCruzaHijos(int *c1, int *c2, int N)
 {
-    //hijos
-    int *c1 = (int *)malloc(sizeof(int) * N);
-    int *c2 = (int *)malloc(sizeof(int) * N);
-    //padres
-    int *p1, *p2;
+    for (int m = 0; m < N; m++)
+    {
+        c1[m] = -1;
+        c2[m] = -1;
+    }
+}
+
+void cruzaInicializaPadres(int *p1, int *p2, int *ind1, int *ind2, int N)
+{
+    for (int m = 0; m < N; m++)
+    {
+        p1[m] = ind1[m];
+        p2[m] = ind2[m];
+    }
+}
+
+void cruzaCopiaMedio(int *c1, int *c2, int *p1, int *p2, int inicio, int fin)
+{
+    for (int a = inicio; a < fin; a++)
+    {
+        c1[a] = p2[a];
+        c2[a] = p1[a];
+    }
+}
+
+void cruzaCopiaExtremo(int *c1, int *c2, int *p1, int *p2, int inicio, int fin, int N, int inimedio, int finmedio)
+{
     int flag1;
     int flag2;
     int pos1, pos2;
-    int k = N / 3;
-    int posnp = np;
-
-    for (int n = 0; (n + 1) < np; n = n + 2)
+    for (int a = inicio; a < fin; a++)
     {
-
-        //inicializo los hijos
-        for (int m = 0; m < N; m++)
-        {
-            c1[m] = -1;
-            c2[m] = -1;
-        }
         flag1 = 0;
         flag2 = 0;
-
-        //inicializo los padres
-
-        p1 = parents[n].config;
-        p2 = parents[n + 1].config;
-
-        for (int a = k; a < (N - k); a++)
+        pos1 = p1[a];
+        pos2 = p2[a];
+        for (int b = inimedio; b < finmedio; b++)
         {
-            c1[a] = p2[a];
-            c2[a] = p1[a];
-        }
-
-        for (int a = 0; a < k; a++)
-        {
-            flag1 = 0;
-            flag2 = 0;
-            pos1 = p1[a];
-            pos2 = p2[a];
-            for (int b = k; b < (N - k); b++)
+            if (pos1 == c1[b])
             {
-                if (pos1 == c1[b])
-                {
-                    flag1 = 1;
-                }
-                if (pos2 == c2[b])
-                {
-                    flag2 = 1;
-                }
+                flag1 = 1;
             }
-            if (!flag1)
+            if (pos2 == c2[b])
             {
-                c1[a] = pos1;
-            }
-            if (!flag2)
-            {
-                c2[a] = pos2;
+                flag2 = 1;
             }
         }
-
-        for (int a = (N - k); a < N; a++)
+        if (!flag1)
         {
-            pos1 = p1[a];
-            pos2 = p2[a];
-            flag1 = 0;
-            flag2 = 0;
-            for (int b = k; b < (N - k); b++)
-            {
-                if (pos1 == c1[b])
-                {
-                    flag1 = 1;
-                }
-                if (pos2 == c2[b])
-                {
-                    flag2 = 1;
-                }
-            }
-            if (!flag1)
-            {
-                c1[a] = pos1;
-            }
-            if (!flag2)
-            {
-                c2[a] = pos2;
-            }
+            c1[a] = pos1;
         }
+        if (!flag2)
+        {
+            c2[a] = pos2;
+        }
+    }
+}
+
+// Partially Mapped Crossover
+void Crossover(Chromo *parents, Chromo *population, int N, int inicio,int fin)
+{
+
+
+    // hijos
+    int *c1 = (int *)malloc(sizeof(int) * N);
+    int *c2 = (int *)malloc(sizeof(int) * N);
+    // padres
+    int *p1 = (int *)malloc(sizeof(int) * N);
+    int *p2 = (int *)malloc(sizeof(int) * N);
+    int flag1;
+
+    int k = N / 3;
+    int posnp = fin;
+
+    for (int n = inicio; (n + 1) < fin; n = n + 2)
+    {
+
+        flag1 = 0;
+
+
+        inicializaCruzaHijos(c1, c2, N);
+
+        // inicializo los padres
+        cruzaInicializaPadres(p1, p2, parents[n].config, parents[n + 1].config, N);
+
+        cruzaCopiaMedio(c1, c2, p1, p2, k, (N - k));
+
+        cruzaCopiaExtremo(c1, c2, p1, p2, 0, k, N, k, (N - k));
+
+        cruzaCopiaExtremo(c1, c2, p1, p2, (N - k), N, N, k, (N - k));
 
         int count, co;
         for (int a = 0; a < N; a++)
@@ -108,7 +110,7 @@ void Crossover(Chromo *parents, Chromo *population, int N, int np)
             {
                 while ((c1[co] != -1) && (co < N))
                 {
-                    co = rand() % N;
+                    co++;
                 }
                 c1[co] = a;
             }
@@ -128,7 +130,7 @@ void Crossover(Chromo *parents, Chromo *population, int N, int np)
             {
                 while ((c2[co] != -1) && (co < N))
                 {
-                    co = rand() % N;
+                    co++;
                 }
                 c2[co] = a;
             }

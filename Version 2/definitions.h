@@ -16,6 +16,7 @@ void cruzaCopiaMedio(int *, int *, int *, int *, int , int );
 void cruzaCopiaExtremo(int *, int *, int *, int *, int , int , int , int , int );
 void Crossover(Chromo *, Chromo *, int , int ,int );
 void selectChampionship(Chromo *, Chromo *, int , int );
+void imprimeTablero(int *,int );
 void printConf(int *, int );
 void calFit(Chromo *, int , int , int );
 void mutation(Chromo *, int , int , int , int );
