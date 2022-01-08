@@ -1,7 +1,7 @@
 clear
-gcc -Werror -Wall mainv2.c -o mainv2.out -fopenmp
+gcc -Werror -Wall main.c -o main.out -fopenmp
 if [ $? -eq 0 ]
 then
     clear
-    ./mainv2.out
+    ./main.out
 fi
