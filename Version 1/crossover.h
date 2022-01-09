@@ -1,5 +1,6 @@
 void inicializaCruzaHijos(int *c1, int *c2, int N)
 {
+    #pragma omp for
     for (int m = 0; m < N; m++)
     {
         c1[m] = -1;
@@ -9,6 +10,7 @@ void inicializaCruzaHijos(int *c1, int *c2, int N)
 
 void cruzaInicializaPadres(int *p1, int *p2, int *ind1, int *ind2, int N)
 {
+    #pragma omp for
     for (int m = 0; m < N; m++)
     {
         p1[m] = ind1[m];
@@ -18,6 +20,7 @@ void cruzaInicializaPadres(int *p1, int *p2, int *ind1, int *ind2, int N)
 
 void cruzaCopiaMedio(int *c1, int *c2, int *p1, int *p2, int inicio, int fin)
 {
+    #pragma omp for
     for (int a = inicio; a < fin; a++)
     {
         c1[a] = p2[a];
@@ -36,6 +39,7 @@ void cruzaCopiaExtremo(int *c1, int *c2, int *p1, int *p2, int inicio, int fin, 
         flag2 = 0;
         pos1 = p1[a];
         pos2 = p2[a];
+        #pragma omp for
         for (int b = inimedio; b < finmedio; b++)
         {
             if (pos1 == c1[b])
@@ -73,7 +77,7 @@ void Crossover(Chromo *parents, Chromo *population, int N, int inicio,int fin)
 
     int k = N / 3;
     int posnp = fin;
-
+    
     for (int n = inicio; (n + 1) < fin; n = n + 2)
     {
 
@@ -92,6 +96,7 @@ void Crossover(Chromo *parents, Chromo *population, int N, int inicio,int fin)
         cruzaCopiaExtremo(c1, c2, p1, p2, (N - k), N, N, k, (N - k));
 
         int count, co;
+        #pragma omp for
         for (int a = 0; a < N; a++)
         {
             flag1 = 0;
@@ -135,7 +140,7 @@ void Crossover(Chromo *parents, Chromo *population, int N, int inicio,int fin)
                 c2[co] = a;
             }
         }
-
+        #pragma omp for
         for (int i = 0; i < N; i++)
         {
             population[posnp].config[i] = c1[i];

@@ -2,6 +2,8 @@ void calFit(Chromo *population, int N, int inicio, int fin)
 {
     int errores;
     int k, i, j;
+
+    #pragma omp for
     for (k = inicio; k < fin; k++)
     {
         errores = 0;
@@ -31,6 +33,8 @@ void calFit(Chromo *population, int N, int inicio, int fin)
 void copyBest(Chromo *Best, Chromo local, int N)
 {
     int i;
+
+    #pragma omp for
     for (i = 0; i < N; i++)
     {
         Best->config[i] = local.config[i];

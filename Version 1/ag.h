@@ -12,79 +12,67 @@ int algoritmoGenetico(int N, int p, int np, Chromo *Best, int prob, int numMaxGe
     int inicio, fin, idthread;
 
     int Bestfitness = 100000;
-// agregar share
-#pragma omp parallel private(idthread, inicio, fin, posminlocal) shared(population, countGen, Bestfitness, Best, parents)
+
+    idthread = omp_get_thread_num();
+    inicio = (idthread * (p / numthreads));
+    fin = inicio + (p / numthreads);
+    // printf("Incio: %d Fin: %d\n",inicio,fin);
+
+    // Generamos la poblacion incial
+    InitConf(population, N, inicio, fin); // check
+
+    // Calculamos el fit de la poblacion inicial
+    calFit(population, N, inicio, fin); // check
+
+    posminlocal = BuscaMin(population, inicio, fin);
+
+    // Insertion_sort(population, p);
+    // if (idthread == 0)
+
+    if (population[posminlocal].fitness < Bestfitness)
     {
-        idthread = omp_get_thread_num();
-        inicio = (idthread * (p / numthreads));
-        fin = inicio + (p / numthreads);
-        // printf("Incio: %d Fin: %d\n",inicio,fin);
+        copyBest(Best, population[posminlocal], N);
+        Bestfitness = population[posminlocal].fitness;
+    }
 
-        // Generamos la poblacion incial
-        InitConf(population, N, inicio, fin); // check
+    // Caso donde se encuentra un optimo en la primer generacion
 
-        // Calculamos el fit de la poblacion inicial
-        calFit(population, N, inicio, fin); // check
+    // En caso contrario se guarda el candidato mas optimo
 
+    while ((Bestfitness > 0) && (countGen < numMaxGen))
+    {
+
+        if (idthread == 0)
+        {
+            // Seleccion de padres
+            selectChampionship(parents, population, N, p); // check
+            // Cruza
+            Crossover(parents, population, N, 0, np); // check
+        }
+
+        // Mutacion
+
+        mutation(population, prob, N, inicio, fin);
+
+        // Calculo del Fit
+        calFit(population, N, inicio, fin);
+
+        // Ordenamos
+        // Insertion_sort(population, p);
         posminlocal = BuscaMin(population, inicio, fin);
 
-// Insertion_sort(population, p);
-// if (idthread == 0)
-//{
-#pragma omp critical
+        if (population[posminlocal].fitness < Bestfitness)
         {
-            if (population[posminlocal].fitness < Bestfitness)
-            {
-                copyBest(Best, population[posminlocal], N);
-                Bestfitness = population[posminlocal].fitness;
-            }
+            copyBest(Best, population[posminlocal], N);
+            Bestfitness = population[posminlocal].fitness;
         }
-        // Caso donde se encuentra un optimo en la primer generacion
 
-        // En caso contrario se guarda el candidato mas optimo
-
-        //  }
-
-        while ((Bestfitness > 0) && (countGen < numMaxGen))
+        if (idthread == 0)
         {
 
-            if (idthread == 0)
-            {
-                // Seleccion de padres
-                selectChampionship(parents, population, N, p); // check
-                // Cruza
-                Crossover(parents, population, N,0 ,np); // check
-            }
-
-#pragma omp barrier
-            // Mutacion
-
-            mutation(population, prob, N, inicio, fin);
-
-            // Calculo del Fit
-            calFit(population, N, inicio, fin);
-
-            // Ordenamos
-            // Insertion_sort(population, p);
-            posminlocal = BuscaMin(population, inicio, fin);
-
-#pragma omp critical
-            {
-                if (population[posminlocal].fitness < Bestfitness)
-                {
-                    copyBest(Best, population[posminlocal], N);
-                    Bestfitness = population[posminlocal].fitness;
-                }
-            }
-
-            if (idthread == 0)
-            {
-
-                countGen++;
-            }
-
-#pragma omp barrier
+            countGen++;
         }
     }
+
     return countGen;
 }

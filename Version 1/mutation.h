@@ -2,6 +2,7 @@
 void mutation(Chromo *population, int prob, int N, int inicio, int fin)
 {
     int aux, i, p1 = 0, p2 = 0;
+    #pragma omp for
     for (i = inicio; i < fin; i++)
     {
         srand(time(NULL));
