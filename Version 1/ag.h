@@ -9,13 +9,10 @@ int algoritmoGenetico(int N, int p, int np, Chromo *Best, int prob, int numMaxGe
     Chromo *population = (Chromo *)malloc(sizeof(Chromo) * p);
     reservaMemoria(population, parents, p, np, N);
 
-    int inicio, fin, idthread;
+    int inicio = 0, fin = np;
 
     int Bestfitness = 100000;
 
-    idthread = omp_get_thread_num();
-    inicio = (idthread * (p / numthreads));
-    fin = inicio + (p / numthreads);
     // printf("Incio: %d Fin: %d\n",inicio,fin);
 
     // Generamos la poblacion incial
@@ -42,13 +39,10 @@ int algoritmoGenetico(int N, int p, int np, Chromo *Best, int prob, int numMaxGe
     while ((Bestfitness > 0) && (countGen < numMaxGen))
     {
 
-        if (idthread == 0)
-        {
-            // Seleccion de padres
-            selectChampionship(parents, population, N, p); // check
-            // Cruza
-            Crossover(parents, population, N, 0, np); // check
-        }
+        // Seleccion de padres
+        selectChampionship(parents, population, N, p); // check
+        // Cruza
+        Crossover(parents, population, N, 0, np); // check
 
         // Mutacion
 
@@ -67,11 +61,7 @@ int algoritmoGenetico(int N, int p, int np, Chromo *Best, int prob, int numMaxGe
             Bestfitness = population[posminlocal].fitness;
         }
 
-        if (idthread == 0)
-        {
-
-            countGen++;
-        }
+        countGen++;
     }
 
     return countGen;
