@@ -28,9 +28,7 @@ int algoritmoGenetico(int N, int p, int np, Chromo *Best, int prob, int numMaxGe
 
         posminlocal = BuscaMin(population, inicio, fin);
 
-// Insertion_sort(population, p);
-// if (idthread == 0)
-//{
+
 #pragma omp critical
         {
             if (population[posminlocal].fitness < Bestfitness)
@@ -77,7 +75,7 @@ int algoritmoGenetico(int N, int p, int np, Chromo *Best, int prob, int numMaxGe
                 }
             }
 
-            if (idthread == 0)
+#pragma omp master
             {
 
                 countGen++;
