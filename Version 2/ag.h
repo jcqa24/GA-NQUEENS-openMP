@@ -37,11 +37,7 @@ int algoritmoGenetico(int N, int p, int np, Chromo *Best, int prob, int numMaxGe
                 Bestfitness = population[posminlocal].fitness;
             }
         }
-        // Caso donde se encuentra un optimo en la primer generacion
 
-        // En caso contrario se guarda el candidato mas optimo
-
-        //  }
 
         while ((Bestfitness > 0) && (countGen < numMaxGen))
         {
